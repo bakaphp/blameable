@@ -26,6 +26,10 @@ class Blameable extends Behavior implements BehaviorInterface
      */
     protected $changedFields;
 
+    public const DELETE = 'D';
+    public const UPDATE = 'U';
+    public const CREATE = 'C';
+
     /**
      * {@inheritdoc}
      *
@@ -55,9 +59,9 @@ class Blameable extends Behavior implements BehaviorInterface
         }
 
         // //Fires 'logBeforeDelete' if the event is 'afterUpdate'
-        // if ($eventType == 'beforeDelete') {
-        //     return $this->auditBeforeDelete($model);
-        // }
+        if ($eventType == 'beforeDelete') {
+            return $this->auditBeforeDelete($model);
+        }
 
         // Fires 'collectData' if the event is 'beforeUpdate'
         if ($eventType == 'beforeUpdate') {
@@ -113,7 +117,7 @@ class Blameable extends Behavior implements BehaviorInterface
      */
     public function auditAfterCreate(ModelInterface $model)
     {
-        $audit = $this->createAudit('C', $model);
+        $audit = $this->createAudit(self::CREATE, $model);
         $fields = $model->getModelsMetaData()->getAttributes($model);
         $hasOne = $model->getDI()->getModelsManager()->getHasOne($model);
         $belongsTo = $model->getDI()->getModelsManager()->getBelongsTo($model);
@@ -254,12 +258,6 @@ class Blameable extends Behavior implements BehaviorInterface
                 if (is_array($relatedData['title'])) {
                     $auditModel = $model;
                     $auditData = $relatedData['title'];
-
-                    // Special case for users because their name has to come from participants
-                    if ($field == 'users_id') {
-                        $originalData[$field] = \Intras\Models\AgenciesUsers::findFirstByUsersId($originalData[$field])->participants_id;
-                    }
-
                     $undefiendPropertyBreakLoop = false;
 
                     while (is_array(current($auditData))) {
@@ -292,7 +290,7 @@ class Blameable extends Behavior implements BehaviorInterface
                 }
             }
 
-            if (!is_null($newValue) && $newValueText != $originalData[$field] && $field != 'updated_at' ) {
+            if (!is_null($newValue) && $newValueText != $originalData[$field] && $field != 'updated_at') {
                 $auditDetail = new AuditsDetails();
                 $auditDetail->field_name = $field;
                 $auditDetail->old_value = $originalData[$field];
@@ -322,7 +320,7 @@ class Blameable extends Behavior implements BehaviorInterface
 
         //Create a new audit
         if (!empty($details)) {
-            $audit = $this->createAudit('U', $model);
+            $audit = $this->createAudit(self::UPDATE, $model);
             $audit->details = $details;
             if (!$audit->save()) {
                 $this->log(current($audit->getMessages()));
@@ -347,7 +345,7 @@ class Blameable extends Behavior implements BehaviorInterface
         $hasOne = $model->getDI()->getModelsManager()->getHasOne($model);
         $belongsTo = $model->getDI()->getModelsManager()->getBelongsTo($model);
         $relations = array_merge($hasOne, $belongsTo);
-        $originalData = $model->getSnapshotData();
+        $originalData = $this->snapshot;
         $details = [];
 
         foreach ($fields as $field) {
@@ -363,6 +361,9 @@ class Blameable extends Behavior implements BehaviorInterface
             $relatedData = $this->getRelationData($model, $relations, $field);
             $oldValueText = '-';
 
+            /**
+             * @todo unify this into 1 function code duplicated in delete and edit
+             */
             if (!empty($relatedData)) {
                 // These means it is a multi level relationship, recursive!
                 if (is_array($relatedData['title'])) {
@@ -387,11 +388,6 @@ class Blameable extends Behavior implements BehaviorInterface
                 if (is_array($relatedData['title'])) {
                     $auditModel = $model;
                     $auditData = $relatedData['title'];
-
-                    // Special case for users because their name has to come from participants
-                    if ($field == 'users_id') {
-                        $originalData[$field] = \Intras\Models\AgenciesUsers::findFirstByUsersId($originalData[$field])->participants_id;
-                    }
 
                     $undefiendPropertyBreakLoop = false;
 
@@ -436,8 +432,8 @@ class Blameable extends Behavior implements BehaviorInterface
             }
         }
 
-        $oldCustomFields = $originalData['custom_fields'];
         if (!empty($model->custom_fields)) {
+            $oldCustomFields = $originalData['custom_fields'];
             foreach ($model->custom_fields as $field => $value) {
                 if ((array_key_exists($field, $oldCustomFields) && $oldCustomFields[$field] != $value && !empty($value)) || (!array_key_exists($field, $oldCustomFields) && !empty($value))) {
                     $auditDetail = new AuditsDetails();
@@ -453,7 +449,7 @@ class Blameable extends Behavior implements BehaviorInterface
         }
 
         if (!empty($details)) {
-            $audit = $this->createAudit('D', $model);
+            $audit = $this->createAudit(self::DELETE, $model);
             $audit->details = $details;
             if (!$audit->save()) {
                 $this->log(current($audit->getMessages()));

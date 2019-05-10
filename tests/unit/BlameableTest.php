@@ -51,7 +51,7 @@ class BlameableTest extends PhalconUnitTestCase
     }
 
     /**
-     * Confirm the audit of the record after an update
+     * Confirm the audit of the record after an update.
      *
      * @return void
      */
@@ -59,6 +59,8 @@ class BlameableTest extends PhalconUnitTestCase
     {
         $lead = Leads::findFirst();
         $lead->firstname = $this->faker->name;
+        $lead->email = $this->faker->email;
+        $lead->leads_owner_id = 2;
         $lead->update();
 
         $auditRecord = Audits::findFirst([
@@ -69,7 +71,31 @@ class BlameableTest extends PhalconUnitTestCase
         //we have an audit of this record
         $this->assertTrue($lead->getId() == $auditRecord->entity_id);
 
-        //its marked as created
+        //its marked as update
         $this->assertTrue($auditRecord->type == 'U');
+    }
+
+    /**
+     * Confirm the audit of the record after an update.
+     *
+     * @return void
+     */
+    public function testAuditDelete()
+    {
+        $lead = Leads::findFirst();
+        $leadId = $lead->getId();
+        $lead->delete();
+
+        //filter it by delete , because the first record is the same as the previous test
+        $auditRecord = Audits::findFirst([
+            'conditions' => 'entity_id = ?0 and model_name = ?1 and type = ?2' ,
+            'bind' => [$lead->getId(), get_class($lead), 'D']
+        ]);
+
+        //we have an audit of this record
+        $this->assertTrue($leadId == $auditRecord->entity_id);
+
+        //its marked as deleted
+        $this->assertTrue($auditRecord->type == 'D');
     }
 }
