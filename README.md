@@ -1,4 +1,4 @@
-# Baka\Behavior
+# Baka Blameable 
 
 ## Table of Contents
 1. [Blameable](#markdown-blameable)
@@ -6,8 +6,15 @@
 ## Blameable
 
 ```php
+use Baka\Blameable\BlameableTrait;
+
 class Leads extends Phalcon\Mvc\Model
 {
+    use BlameableTrait;
+
+    /**
+     * Initialize
+     */
     public function initialize()
     {
         $this->keepSnapshots(true);
