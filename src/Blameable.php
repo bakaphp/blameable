@@ -177,8 +177,8 @@ class Blameable extends Behavior implements BehaviorInterface
         }
 
         // Add custom fields to the fields
-        if (!empty($model->custom_fields)) {
-            foreach ($model->custom_fields as $field => $value) {
+        if (!empty($model->customFields)) {
+            foreach ($model->customFields as $field => $value) {
                 if (empty($value)) {
                     continue;
                 }
@@ -302,9 +302,9 @@ class Blameable extends Behavior implements BehaviorInterface
         }
 
         // Add custom fields to the fields
-        if (!empty($model->custom_fields)) {
-            $oldCustomFields = $originalData['custom_fields'];
-            foreach ($model->custom_fields as $field => $value) {
+        if (!empty($model->customFields)) {
+            $oldCustomFields = $originalData['customFields'];
+            foreach ($model->customFields as $field => $value) {
                 if ((array_key_exists($field, $oldCustomFields) && $oldCustomFields[$field] != $value && !empty($value)) || (!array_key_exists($field, $oldCustomFields) && !empty($value))) {
                     $auditDetail = new AuditsDetails();
                     $auditDetail->field_name = $field;
@@ -432,9 +432,9 @@ class Blameable extends Behavior implements BehaviorInterface
             }
         }
 
-        if (!empty($model->custom_fields)) {
-            $oldCustomFields = $originalData['custom_fields'];
-            foreach ($model->custom_fields as $field => $value) {
+        if (!empty($model->customFields)) {
+            $oldCustomFields = $originalData['customFields'];
+            foreach ($model->customFields as $field => $value) {
                 if ((array_key_exists($field, $oldCustomFields) && $oldCustomFields[$field] != $value && !empty($value)) || (!array_key_exists($field, $oldCustomFields) && !empty($value))) {
                     $auditDetail = new AuditsDetails();
                     $auditDetail->field_name = $field;
