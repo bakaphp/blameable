@@ -26,6 +26,20 @@ class Blameable extends Behavior implements BehaviorInterface
      */
     protected $changedFields;
 
+    /**
+     * custom fields from the current model.
+     *
+     * @var array
+     */
+    private $customFields = [];
+
+    /**
+     * Can update custom fields
+     *
+     * @var boolean
+     */
+    private $canUpdateCustomField = false;
+
     public const DELETE = 'D';
     public const UPDATE = 'U';
     public const CREATE = 'C';
@@ -51,6 +65,14 @@ class Blameable extends Behavior implements BehaviorInterface
         //Fires 'logAfterUpdate' if the event is 'afterCreate'
         if ($eventType == 'afterCreate') {
             return $this->auditAfterCreate($model);
+        }
+
+        //given that custom field are dynamic fields we need to capture their before state , before proceeding with the audit
+        if ($eventType == 'beforeUpdate') {
+            if (!empty($model->customFields)) {
+                $this->canUpdateCustomField = true;
+                $this->customFields = $model->getAllCustomFields();
+            }
         }
 
         //Fires 'logAfterUpdate' if the event is 'afterUpdate'
@@ -302,10 +324,12 @@ class Blameable extends Behavior implements BehaviorInterface
         }
 
         // Add custom fields to the fields
-        if (!empty($model->customFields)) {
-            $oldCustomFields = $originalData['customFields'];
+        if ($this->canUpdateCustomField) {
+            $oldCustomFields = $this->customFields;
             foreach ($model->customFields as $field => $value) {
-                if ((array_key_exists($field, $oldCustomFields) && $oldCustomFields[$field] != $value && !empty($value)) || (!array_key_exists($field, $oldCustomFields) && !empty($value))) {
+                if ((array_key_exists($field, $oldCustomFields)
+                        && $oldCustomFields[$field] != $value && !empty($value))
+                    ) {
                     $auditDetail = new AuditsDetails();
                     $auditDetail->field_name = $field;
                     $auditDetail->old_value = $oldCustomFields[$field] ?? '';
@@ -329,7 +353,7 @@ class Blameable extends Behavior implements BehaviorInterface
             return true;
         }
 
-        return null;
+        return false;
     }
 
     /**
@@ -458,7 +482,7 @@ class Blameable extends Behavior implements BehaviorInterface
             return true;
         }
 
-        return null;
+        return false;
     }
 
     /**
