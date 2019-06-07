@@ -14,7 +14,7 @@ class Blameable extends Behavior implements BehaviorInterface
      *
      * @var array
      */
-    private $excludeFields = [];
+    protected $excludeFields = [];
 
     /**
      * @var array
@@ -31,14 +31,14 @@ class Blameable extends Behavior implements BehaviorInterface
      *
      * @var array
      */
-    private $customFields = [];
+    protected $customFields = [];
 
     /**
      * Can update custom fields
      *
      * @var boolean
      */
-    private $canUpdateCustomField = false;
+    protected $canUpdateCustomField = false;
 
     public const DELETE = 'D';
     public const UPDATE = 'U';
@@ -504,7 +504,7 @@ class Blameable extends Behavior implements BehaviorInterface
      * @param  string $field
      * @return array
      */
-    private function getRelationData($model, $relations, $field): array
+    protected function getRelationData($model, $relations, $field): array
     {
         $auditColumns = $model->getAuditColumns();
 
