@@ -34,7 +34,7 @@ class Blameable extends Behavior implements BehaviorInterface
     protected $customFields = [];
 
     /**
-     * Can update custom fields
+     * Can update custom fields.
      *
      * @var boolean
      */
@@ -101,7 +101,11 @@ class Blameable extends Behavior implements BehaviorInterface
     public function createAudit($type, ModelInterface $model): Audits
     {
         // Grab user data from the registered service
-        $user = $model->getDI()->has('userData') ? $model->getDI()->get('userData') : null;
+        if (!method_exists($model, 'getBlameableUser')) {
+            $user = $model->getDI()->has('userData') ? $model->getDI()->get('userData') : null;
+        } else {
+            $user = $model->getBlameableUser();
+        }
 
         // Get the request service
         $request = $model->getDI()->has('request') ? $model->getDI()->get('request') : null;
