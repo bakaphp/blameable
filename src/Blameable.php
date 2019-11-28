@@ -6,6 +6,7 @@ use Phalcon\Mvc\Model\Behavior;
 use Phalcon\Mvc\Model\BehaviorInterface;
 use Phalcon\Mvc\ModelInterface;
 use Phalcon\DI;
+use Throwable;
 
 class Blameable extends Behavior implements BehaviorInterface
 {
@@ -532,6 +533,10 @@ class Blameable extends Behavior implements BehaviorInterface
     protected function collectData(ModelInterface $model): void
     {
         $this->snapshot = $model->getSnapshotData();
-        $this->changedFields = $model->getChangedFields();
+        try {
+            $this->changedFields = $model->getChangedFields();
+        } catch (Throwable $th) {
+            $this->changedFields = [];
+        }
     }
 }
